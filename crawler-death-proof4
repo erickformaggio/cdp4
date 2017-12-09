@@ -1,0 +1,160 @@
+#!/bin/sh
+
+
+# Crawler Death Proof
+#
+# Autor: Erick Formaggio (erick.beltrami@gmail.com)
+# 
+# Criacao: 	05/12/2016
+# Atualizacao:	21/10/17"
+# 
+# Descricao: 	Testa um site para varios itens de seguranca.
+# 		Funcionamento somente no Kali Linux, pois ele precisa dos programas instalados.
+
+echo "HOST SEM WWW"
+read host
+
+echo "URL DO BLOG COM WWW"
+read blog
+
+# Criacao do diretorio com o nome do host
+mkdir -p Testes/"$host"
+
+# Opcoes
+clear
+
+echo "Escolha uma das alternativas:"
+echo "1 - Teste de vulnerabilidades"
+echo "2 - Dados de dominio"
+echo "3 - Todos os testes para sites"
+echo "4 - DOS atack teste"
+echo "5 - Ataque Slowloris"
+echo "6 - Localizar"
+echo "7 - Vulnerabilidades recentes"
+
+read opcao
+
+case $opcao in
+
+# Opcao 1 Teste de Vulnerabilidades
+1)
+clear
+echo "**************************************************************"
+echo "NMAP VULNERABILIDADES"
+echo "Analisando..."
+nmap -Pn --script vuln "$host" > Testes/"$host"/"$host"_nmap-vulnerabilidades.txt
+cat Testes/"$host"/"$host"_nmap-vulnerabilidades.txt
+;;
+
+# Opcao 2 Dados de dominio	
+2)
+clear
+echo "**************************************************************"
+echo "WHOIS"
+whois "$host" > Testes/"$host"/"$host"_whois.txt
+cat Testes/"$host"/"$host"_whois.txt
+;;
+
+# Opcao 3 Todos os testes
+3)
+clear
+echo "**************************************************************"
+echo "1. HOST"
+host "$host" > Testes/"$host"/"$host"_host.txt
+cat Testes/"$host"/"$host"_host.txt 
+sleep 5
+
+clear
+echo "**************************************************************"
+echo "2. DIG"
+dig "$host" -t mx > Testes/"$host"/"$host"_dig.txt
+cat Testes/"$host"/"$host"_dig.txt
+sleep 5 
+
+clear
+echo "**************************************************************"
+echo "3. WHOIS"
+whois "$host" > Testes/"$host"/"$host"_whois.txt
+cat Testes/"$host"/"$host"_whois.txt
+sleep 5
+
+clear
+echo "**************************************************************"
+echo "4. NIKTO"
+echo "Analisando..."
+nikto -h "$host" > Testes/"$host"/"$host"_nikto.txt
+cat Testes/"$host"/"$host"_nikto.txt
+sleep 5
+
+clear
+echo "**************************************************************"
+echo "5. THE HARVESTER"
+theharvester -d "$host" -b google > Testes/"$host"/"$host"_tharvester.txt
+cat Testes/"$host"/"$host"_tharvester.txt
+
+clear
+echo "**************************************************************"
+echo "6. NMAP"
+echo "Analisando..."
+nmap -A -T4 -v "$host" > Testes/"$host"/"$host"_nmap.txt
+cat Testes/"$host"/"$host"_nmap.txt
+
+clear
+echo "**************************************************************"
+echo "7. NMAP VULNERABILIDADES"
+echo "Analisando..."
+nmap -sS -sV --script vuln "$host" -v >> Testes/"$host"/"$host"_nmap-vulnerabilidades.txt
+cat Testes/"$host"/"$host"_nmap-vulnerabilidades.txt
+
+clear
+echo "**************************************************************"
+echo "8. WPSCAN"
+echo "Analisando..."
+wpscan --url "$blog" > Testes/"$host"/"$host"_blog.txt
+cat Testes/"$host"/"$host"_blog.txt
+
+clear
+echo "**************************************************************"
+echo "9. DETERMINANDO LOCAL SERVER"
+nmap -sV --script ip-geolocation-geoplugin "$host" > Testes/"$host"/"$host"_localizacao.txt
+;;
+
+
+# OPCAO 4 TESTE SLOWLORIS
+4)
+clear
+echo "**************************************************************"
+echo "Iniciando teste..."
+nmap --script http-slowloris --max-parallelism 400 "$host" -v
+;;
+
+# OPCAO 5 ATAQUE SLOWLORIS
+5)
+clear
+echo "**************************************************************"
+echo "Iniciando ataque..."
+./slowloris.pl -dns "$host"
+;;
+
+6)
+clear
+echo "**************************************************************"
+echo "Iniciando teste..."
+nmap -sV --script ip-geolocation-geoplugin "$host" > Testes/"$host"/"$host"_localizacao.txt
+;;
+
+#Vulnerabilidades recentes
+7)
+clear
+grep -rl vulnerable
+;;
+
+esac
+
+
+echo "**************************************************************"
+echo "*                           FIM                              *"
+echo "**************************************************************"
+
+RETURN_CODE=$?
+
